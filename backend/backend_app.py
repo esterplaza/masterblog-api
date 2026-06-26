@@ -81,5 +81,31 @@ def delete_post(post_id):
     return jsonify({"message": f"Post with id {post_id} has been deleted successfully."})
 
 
+@app.route('/api/posts/<int:post_id>', methods=['PUT'])
+def update_post(post_id):
+    """Updates a new blog post.
+    PUT request: expect a JSON object in the body of the request with the
+    following structure:
+    {
+    "title": "<title of the new post>",
+    "content": "<content of the new post>"
+    }
+
+    Returns:
+        return a JSON object with the following structure:
+        {
+        "id": "<id of the updated post>",
+        "title": "<new title or old title if not provided>",
+        "content": "<new content or old content if not provided>"
+        }
+    """
+    post = find_post_by_id(post_id)
+    if post is None:
+        return jsonify({"error": "Post not found"}), 404
+    new_post = request.get_json()
+    post.update(new_post)
+    return jsonify(post), 200
+
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5002, debug=True)
