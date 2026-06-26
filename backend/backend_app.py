@@ -10,6 +10,17 @@ POSTS = [
 ]
 
 
+def find_post_by_id(post_id):
+    """searchs for the post with the id: post_id
+    Args:
+        post_id (int): id of the blog_post
+    """
+    for post in POSTS:
+        if post.get("id") == post_id:
+            return post
+    return None
+
+
 @app.route('/api/posts', methods=['GET'])
 def get_posts():
     return jsonify(POSTS)
@@ -44,6 +55,30 @@ def add_posts():
     new_post["id"] = max((post["id"] for post in POSTS), default=0) + 1
     POSTS.append(new_post)
     return jsonify(new_post), 201
+
+
+@app.route('/api/posts/<int:post_id>', methods=['DELETE'])
+def delete_post(post_id):
+    """Deletes a blog post by its ID.
+
+    Searches in the json object for a post matching the provided ID.
+    If found, the post is removed from the list, the updated list is saved.
+
+    Args:
+        post_id (int): The identifier of the blog post to delete.
+
+    Returns:
+        It the post with the given id exists, the endpoint deletes the post and
+        return a JSON object with the following structure:
+         {
+        "message": "Post with id <id> has been deleted successfully."
+        }.
+    """
+    post = find_post_by_id(post_id)
+    if post is None:
+        return jsonify({"error": "Post not found"}), 404
+    POSTS.remove(post)
+    return jsonify({"message": f"Post with id {post_id} has been deleted successfully."})
 
 
 if __name__ == '__main__':
