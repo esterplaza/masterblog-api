@@ -23,6 +23,16 @@ def find_post_by_id(post_id):
 
 @app.route('/api/posts', methods=['GET'])
 def get_posts():
+    """Displays the posts in json format.
+
+        Returns:
+        return a JSON object with the following structure:
+        [{
+        "id": "<id of post>",
+        "title": "<title  post>",
+        "content": "<content of post>"
+        }, {  ...  other post with same format... }, ...]
+    """
     return jsonify(POSTS)
 
 
@@ -105,6 +115,29 @@ def update_post(post_id):
     new_post = request.get_json()
     post.update(new_post)
     return jsonify(post), 200
+
+
+@app.route('/api/posts/search', methods=['GET'])
+def search_posts():
+    """search for posts by their title or content
+    Input to this endpoint will be provided as query parameters in the URL.
+    query parameters:
+        title: post title to search
+        content: post content to search
+
+    Returns:
+        A json object with the list of posts that match the search criteria,
+         in the same format as the “list” endpoint.
+        If no posts match the search criteria, it returns an empty list
+    """
+    title = request.args.get("title")
+    content = request.args.get("content")
+    filtered_posts = []
+    if title:
+        filtered_posts = [post for post in POSTS if title in post.get("title")]
+    if content:
+        filtered_posts = [post for post in POSTS if content in post.get("content")]
+    return jsonify(filtered_posts)
 
 
 if __name__ == '__main__':
