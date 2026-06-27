@@ -21,19 +21,51 @@ def find_post_by_id(post_id):
     return None
 
 
+def sort_function(sort_type, sort_direction):
+    """sorts the POSTS list according to the arguments sort_type and
+    sort_direction.
+    Args:
+        sort_type (str): key of the dictionary to be sorted
+        sort_direction (str): direction of the sorting (ascending or descending)
+    """
+    if sort_direction == "desc":
+        sorted_posts = sorted(POSTS, key=lambda k: k[sort_type], reverse=True)
+    else:
+        sorted_posts = sorted(POSTS, key=lambda k: k[sort_type])
+    return sorted_posts
+
+
 @app.route('/api/posts', methods=['GET'])
 def get_posts():
     """Displays the posts in json format.
 
-        Returns:
-        return a JSON object with the following structure:
+    Parameters (optional):
+        sort: specifies the field by which posts should be sorted.
+            It should accept the values title or content
+        direction: Specifies the sort order.
+            It should accept asc for ascending order
+            and desc for descending order.
+
+    Returns:
+    return a JSON object with the following structure:
         [{
         "id": "<id of post>",
         "title": "<title  post>",
         "content": "<content of post>"
         }, {  ...  other post with same format... }, ...]
+    If the optional parameters are used, the returned JSON object will be sorted
+    according these parameters.
     """
-    return jsonify(POSTS)
+    valid_sort_values = ["title", "content"]
+    valid_direction_values = ["asc", "desc"]
+    sort = request.args.get("sort")
+    direction = request.args.get("direction")
+    if not sort and not direction:
+        return jsonify(POSTS)
+    if sort not in valid_sort_values or direction not in valid_direction_values:
+        return jsonify({"error": "Bad request"}), 404
+    sorted_posts = sort_function(sort, direction)
+    return jsonify(sorted_posts)
 
 
 @app.route('/api/posts', methods=['POST'])
