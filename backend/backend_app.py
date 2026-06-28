@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+from flask_swagger_ui import get_swaggerui_blueprint
 
 app = Flask(__name__)
 CORS(app)  # This will enable CORS for all routes
@@ -8,6 +9,19 @@ POSTS = [
     {"id": 1, "title": "First post", "content": "This is the first post."},
     {"id": 2, "title": "Second post", "content": "This is the second post."},
 ]
+
+
+SWAGGER_URL = "/api/docs"  # (1) swagger endpoint e.g. HTTP://localhost:5002/api/docs
+API_URL = "/static/masterblog.json"  # (2) ensure you create this dir and file
+
+swagger_ui_blueprint = get_swaggerui_blueprint(
+    SWAGGER_URL,
+    API_URL,
+    config={
+        'app_name': 'Masterblog API'  # (3) You can change this if you like
+    }
+)
+app.register_blueprint(swagger_ui_blueprint, url_prefix=SWAGGER_URL)
 
 
 def find_post_by_id(post_id):
@@ -29,9 +43,9 @@ def sort_function(sort_type, sort_direction):
         sort_direction (str): direction of the sorting (ascending or descending)
     """
     if sort_direction == "desc":
-        sorted_posts = sorted(POSTS, key=lambda k: k[sort_type], reverse=True)
+        sorted_posts = sorted(POSTS, key=lambda k: k[sort_type].lower(), reverse=True)
     else:
-        sorted_posts = sorted(POSTS, key=lambda k: k[sort_type])
+        sorted_posts = sorted(POSTS, key=lambda k: k[sort_type].lower())
     return sorted_posts
 
 
@@ -63,7 +77,7 @@ def get_posts():
     if not sort and not direction:
         return jsonify(POSTS)
     if sort not in valid_sort_values or direction not in valid_direction_values:
-        return jsonify({"error": "Bad request"}), 404
+        return jsonify({"error": "Bad request"}), 400
     sorted_posts = sort_function(sort, direction)
     return jsonify(sorted_posts)
 
@@ -164,11 +178,26 @@ def search_posts():
     """
     title = request.args.get("title")
     content = request.args.get("content")
-    filtered_posts = []
+    query_parameters = {}
     if title:
-        filtered_posts = [post for post in POSTS if title in post.get("title")]
+        query_parameters["title"] = title.lower()
     if content:
-        filtered_posts = [post for post in POSTS if content in post.get("content")]
+        query_parameters["content"] = content.lower()
+    filtered_posts = []
+    for post in POSTS:
+        matches = True
+        for key, value in query_parameters.items():
+            if not matches:
+                break
+            if post.get(key):
+                post_item = post.get(key)
+                post_item_low = post_item.lower()
+                if value not in post_item_low:
+                    matches = False
+            else:
+                matches = False
+        if matches:
+            filtered_posts.append(post)
     return jsonify(filtered_posts)
 
 
