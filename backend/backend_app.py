@@ -74,7 +74,7 @@ def get_posts():
     valid_direction_values = ["asc", "desc"]
     sort = request.args.get("sort")
     direction = request.args.get("direction")
-    if not sort and not direction:
+    if not sort or not direction:
         return jsonify(POSTS)
     if sort not in valid_sort_values or direction not in valid_direction_values:
         return jsonify({"error": "Bad request"}), 400
@@ -134,7 +134,7 @@ def delete_post(post_id):
     if post is None:
         return jsonify({"error": "Post not found"}), 404
     POSTS.remove(post)
-    return jsonify({"message": f"Post with id {post_id} has been deleted successfully."})
+    return jsonify({"message": f"Post with id {post_id} has been deleted successfully."}), 200
 
 
 @app.route('/api/posts/<int:post_id>', methods=['PUT'])
@@ -159,7 +159,12 @@ def update_post(post_id):
     if post is None:
         return jsonify({"error": "Post not found"}), 404
     new_post = request.get_json()
-    post.update(new_post)
+    print(new_post)
+    for key, value in new_post.items():
+        if key == "title" or key == "content":
+            post[key] = value
+        else:
+            return jsonify({"error": "The input is not valid"}), 404
     return jsonify(post), 200
 
 
